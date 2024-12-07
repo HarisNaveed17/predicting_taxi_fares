@@ -188,7 +188,15 @@ if __name__ == "__main__":
     
     full_data = pd.concat(data)
 
-    full_data.to_csv(os.path.join(PROC_DATA_DIR, "full_data.csv"))
+    # Sort and return
+    full_data = full_data.sort_index()
+
+    train_data = full_data.loc['2022':'2023']  # Include data for 2022 and 2023
+    test_data = full_data.loc['2024'] 
+
+    # Get train and test
+    train_data.to_csv(os.path.join(PROC_DATA_DIR, "train.csv"))
+    test_data.to_csv(os.path.join(PROC_DATA_DIR, "test.csv"))
 
 
 

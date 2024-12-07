@@ -62,6 +62,22 @@ def process_data(file=None, cols_to_keep=None, location_ids=None, manhattan=Fals
     else:
         print("WARNING, keeping all data columns. Watch data size")
 
+    # Isolate to only semester times
+    start_dates = ['2022-01-24', '2023-01-23', '2024-01-22']
+    end_dates = ['2022-05-17', '2023-05-16', '2024-05-14']
+
+    start_dates = pd.to_datetime(start_dates)
+    end_dates = pd.to_datetime(end_dates)
+
+    mask = pd.Series(False, index=data.index)  # Start with all False
+
+    # Apply mask
+    for start, end in zip(start_dates, end_dates):
+        mask |= data['tpep_pickup_datetime'].between(start, end)
+
+    # Filter
+    data = data[mask]
+
     # Now keep pickup ID in that location
     if len(location_ids) < 2:
         data = data[data["PULocationID"] == location_ids[0]].drop(columns=["PULocationID"], axis=1)

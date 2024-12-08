@@ -96,14 +96,15 @@ def process_data(file=None, cols_to_keep=None, location_ids=None, manhattan=Fals
     return data
 
 ## Now specify parameters for time series
-def aggregate_time_series(data=None, interval='30min', agg_func='sum', include_friday=False, include_observed=False):
+def aggregate_time_series(data=None, interval='30min', agg_func='sum', include_friday=False, include_observed=False, binary_weekday=False):
 
     # Set index to pickup, sort ascending
     data["tpep_pickup_datetime"] = pd.to_datetime(data["tpep_pickup_datetime"])
     data = data.set_index("tpep_pickup_datetime", drop=True).sort_index()
 
     # Create a dictionary with all columns applying the same aggregation function
-    agg_dict = {col: agg_func for col in data.columns}
+    agg_dict = {col: agg_func for col in data.columns.drop('tip_amount')}
+    agg_dict['tip_amount'] = 'median'
     
     # Resample and aggregate the DataFrame
     data_time = data.resample(interval).agg(agg_dict)
@@ -113,10 +114,13 @@ def aggregate_time_series(data=None, interval='30min', agg_func='sum', include_f
     data_time['pickup_count'] = pickups
 
     # Include weekdays
-    if include_friday:
-        data_time['weekday'] = data_time.index.weekday >= 4 
+    if binary_weekday:
+        if include_friday:
+            data_time['weekday'] = data_time.index.weekday >= 4 
+        else:
+            data_time['weekday'] = data_time.index.weekday >= 5 # Doesn't include Friday
     else:
-        data_time['weekday'] = data_time.index.weekday >= 5 # Doesn't include Friday
+        data_time['weekday'] = data_time.index.weekday
 
     # Include holidays
     us_holidays = holidays.US(years=range(2022, 2025)) # 2022 to 2024
@@ -163,6 +167,9 @@ if __name__ == "__main__":
     # Decide to include observed holidays (if falls on Sun, include Mon)
     INCLUDE_OBSERVED = False
 
+    # Decide whether to discretize on weekend
+    DISCRETIZE_WEEKEND = False
+
     # Get data object
     data = list()
 
@@ -182,7 +189,8 @@ if __name__ == "__main__":
                                      interval=BINS,
                                      agg_func='sum', # sum for aggregation over period (this applies to all columns for now)
                                      include_friday=INCLUDE_FRIDAY, # do not count friday as a weekend
-                                     include_observed=INCLUDE_OBSERVED) # do not include observed holidays
+                                     include_observed=INCLUDE_OBSERVED,  # do not include observed holidays
+                                     binary_weekday=DISCRETIZE_WEEKEND) # discretize weekends
     
         data.append(chunk)
     

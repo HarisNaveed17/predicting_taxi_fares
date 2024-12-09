@@ -1,4 +1,5 @@
 import os
+import numpy as np
 import pandas as pd
 import holidays
 from statsmodels.tsa.seasonal import seasonal_decompose
@@ -26,7 +27,7 @@ def get_taxi_zone_id(area_names):
 
 
 def get_holidays(df):
-    df['is_weekend'] = df.index.weekday >= 5
+    df['is_weekend'] = np.where(df.index.weekday >= 5, 1, 0)
     spring_2022 = ['2022-03-14', '2022-03-20']
     spring_2023 = ['2023-03-13', '2023-03-19']
     sp22_dates = pd.date_range(spring_2022[0], spring_2022[-1], freq='D').tolist()
@@ -35,13 +36,13 @@ def get_holidays(df):
     custom_holidays.append(sp22_dates)
     custom_holidays.append(sp23_dates)
     df["date"] = pd.to_datetime(df.index)
-    df['is_holiday'] = df["date"].apply(lambda x: True if x in custom_holidays else False)
+    df['is_holiday'] = df["date"].apply(lambda x: 1 if x in custom_holidays else 0)
     df = df.drop(columns=["date"])
     return df
 
 
 
-def concat_process_data(path, area_names):
+def concat_process_data(path, area_names, resample_interval):
     """load parquets files, combine them and export as csv
 
     Args:
@@ -54,16 +55,19 @@ def concat_process_data(path, area_names):
     zones = get_taxi_zone_id(area_names)
     for filename in os.listdir(path):
         filepath = os.path.join(path, filename)
-        chunk = process_data(filepath, ["tpep_pickup_datetime", "PULocationID", "tip_amount"], zones)
+        chunk = process_data(filepath, ["tpep_pickup_datetime", "PULocationID", "tip_amount"], zones, resample_interval).round(2)
     
         data.append(chunk)
-    full_data = pd.concat(data)
-    full_data.to_csv("full_data.csv")
-    return pd.concat(data)
+    full = pd.concat(data)
+    data_sem22 = full["2022-01-24 00:00:00": "2022-05-09 23:30:00"]
+    data_sem23 = full["2023-01-23 00:00:00": "2023-05-16 23:30:00"]
+    data_sems = pd.concat([data_sem22, data_sem23])
+    data_sems.to_csv(f"full_data_{resample_interval}.csv")
+    return data_sems
 
 
 
-def process_data(file, cols_to_use, locs):
+def process_data(file, cols_to_use, locs, resample_interval):
     data = pd.read_parquet(file, columns=cols_to_use, engine="pyarrow")
     if len(locs) < 2:
         data_locs = data[data["PULocationID"] == locs[0]].drop(columns=["PULocationID"], axis=1)
@@ -71,12 +75,12 @@ def process_data(file, cols_to_use, locs):
         data_locs = data[data["PULocationID"].isin(locs)].drop(columns=["PULocationID"], axis=1)
     data_locs["tpep_pickup_datetime"] = pd.to_datetime(data_locs["tpep_pickup_datetime"])
     data_locs = data_locs.set_index("tpep_pickup_datetime", drop=True).sort_index()
-    data_hourly = data_locs.resample("30min").size()
-    data_fin = data_locs.resample("30min").agg({
-        "tip_amount": "sum"
+    data_hourly = data_locs.resample(resample_interval).size()
+    data_fin = data_locs.resample(resample_interval).agg({
+        "tip_amount": "median"
     })
     data_fin["Number_of_fares"] = data_hourly
-    data_fin = get_holidays(data_fin)
+    #data_fin = get_holidays(data_fin)
     return data_fin
 
 
@@ -84,7 +88,8 @@ def process_data(file, cols_to_use, locs):
 if __name__ == "__main__":
     #df = concat_process_data(DATA_DIR)
     area_names = ["Greenwich Village South"]
-    full_data = concat_process_data(DATA_DIR, area_names)
+    full_data = concat_process_data(DATA_DIR, area_names, "30min")
+    print(full_data)
     # locs = get_taxi_zone_id(area_names)
     # df = process_data("raw_data/yellow_tripdata_2022-01.parquet", ["tpep_pickup_datetime", "PULocationID", "tip_amount"], locs)
     # result = seasonal_decompose(df["Number_of_fares"], model='additive')

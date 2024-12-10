@@ -24,21 +24,22 @@ def pick_zones(zone=None, borough="Manhattan"):
     else:
         print("WARNING: outside Manhattan. See borough options...")
         print(zones['Zone'].unique())
+        manhattan_ids = None
 
-    if zone:
-        # Extract all zones with that zone you pass (could be some hybrid ones)
-        neighborhood = zones['Zone'].str.contains(zone)
-        results = zones[neighborhood]
-        print("See filtered data...")
-        print(results)
+    
+    # Extract all zones with that zone you pass (could be some hybrid ones)
+    neighborhood = zones['Zone'].str.contains(zone)
+    neighborhood = neighborhood.fillna(False)
+    print(neighborhood)
+    results = zones[neighborhood]
+    print("See filtered data...")
+    print(results)
 
-        # Save location id
-        location_ids = results['LocationID'].values
+    # Save location id
+    location_ids = results['LocationID'].values
 
-        print("See location ids...")
-        print(location_ids)
-    else:
-        print("WARNING failed zone filter")
+    print("See location ids...")
+    print(location_ids)
 
 
     return location_ids, manhattan_ids
@@ -155,9 +156,11 @@ if __name__ == "__main__":
     
     # Pick zone
     ZONE = 'Penn Station/Madison Sq West'
-
+   # ZONE = 'Greenwich Village South'
+   # ZONE = 'Upper East Side South'
+   # ZONE = 'JFK Airport'
     # Pick interval for binning
-    BINS = '12h'
+    BINS = '1h'
 
     # Decide to include fridays
     INCLUDE_FRIDAY = False
@@ -178,6 +181,7 @@ if __name__ == "__main__":
 
         # Process the data
         zones, _ = pick_zones(zone=ZONE)
+        #zones, _ = pick_zones(zone=ZONE, borough="")
 
         chunk = process_data(filepath, 
                              cols_to_keep=COLS, 

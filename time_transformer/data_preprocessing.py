@@ -19,29 +19,31 @@ class PickupDataset(Dataset):
         return torch.tensor(X_seq, dtype=torch.float32), torch.tensor(y_seq, dtype=torch.float32)
 
 
-def load_data(file_path, batch_size, seq_len):
-    # Load dataset
-    df = pd.read_csv(file_path, parse_dates=["tpep_pickup_datetime", "pickup_time"])
+def load_data(train_path, test_path, seq_len, batch_size):
+    # Load train and test datasets
+    train_df = pd.read_csv(train_path, parse_dates=["tpep_pickup_datetime", "pickup_time"])
+    test_df = pd.read_csv(test_path, parse_dates=["tpep_pickup_datetime", "pickup_time"])
 
     # Features
-    features = df[["passenger_count", "trip_distance", "fare_amount", "total_amount", 
-                   "tip_amount", "is_holiday", "weekday"]].values
+    feature_columns = ["passenger_count", "trip_distance", "fare_amount", "total_amount", 
+                       "tip_amount", "is_holiday", "weekday"]
+    X_train = train_df[feature_columns].values
+    X_test = test_df[feature_columns].values
 
     # Target
-    target = df["pickup_count"].values
+    y_train = train_df["pickup_count"].values
+    y_test = test_df["pickup_count"].values
 
-    # Scale features
+    # Scale features using MinMaxScaler
     scaler = MinMaxScaler()
-    features = scaler.fit_transform(features)
+    X_train = scaler.fit_transform(X_train)
+    X_test = scaler.transform(X_test)
 
-    # Dataset
-    dataset = PickupDataset(features, target, seq_len)
+    # Create datasets
+    train_dataset = PickupDataset(X_train, y_train, seq_len)
+    test_dataset = PickupDataset(X_test, y_test, seq_len)
 
-    # Train-test split
-    split_idx = int(0.8 * len(dataset))
-    train_dataset, test_dataset = torch.utils.data.random_split(dataset, [split_idx, len(dataset) - split_idx])
-
-    # Dataloaders
+    # Create data loaders
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
     test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
 

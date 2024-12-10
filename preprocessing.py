@@ -6,9 +6,8 @@ from statsmodels.tsa.seasonal import seasonal_decompose
 import matplotlib.pyplot as plt
 
 
-
-DATA_DIR = "raw_data"
-PROC_DATA_DIR = "processed_data"
+DATA_DIR = "/scratch/gl2758/PTSA/Data"
+PROC_DATA_DIR = "/scratch/gl2758/PTSA/output"
 
 def get_taxi_zone_id(area_names):
     """Retrieve the Taxi Zone ID used in the database for areas of interest
@@ -58,11 +57,11 @@ def concat_process_data(path, area_names, resample_interval):
         chunk = process_data(filepath, ["tpep_pickup_datetime", "PULocationID", "tip_amount"], zones, resample_interval).round(2)
     
         data.append(chunk)
-    full = pd.concat(data)
+    full = pd.concat(data).sort_index()
     data_sem22 = full["2022-01-24 00:00:00": "2022-05-09 23:30:00"]
     data_sem23 = full["2023-01-23 00:00:00": "2023-05-16 23:30:00"]
     data_sems = pd.concat([data_sem22, data_sem23])
-    data_sems.to_csv(f"full_data_{resample_interval}.csv")
+    data_sems.to_csv(f"WSQ_full_data_{resample_interval}.csv")
     return data_sems
 
 
@@ -87,8 +86,9 @@ def process_data(file, cols_to_use, locs, resample_interval):
 
 if __name__ == "__main__":
     #df = concat_process_data(DATA_DIR)
+# <<<<<<< Updated upstream
     area_names = ["Greenwich Village South"]
-    full_data = concat_process_data(DATA_DIR, area_names, "30min")
+    full_data = concat_process_data(DATA_DIR, area_names, "240min")
     print(full_data)
     # locs = get_taxi_zone_id(area_names)
     # df = process_data("raw_data/yellow_tripdata_2022-01.parquet", ["tpep_pickup_datetime", "PULocationID", "tip_amount"], locs)

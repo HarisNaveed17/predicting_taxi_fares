@@ -157,7 +157,7 @@ if __name__ == "__main__":
     ZONE = 'Penn Station/Madison Sq West'
 
     # Pick interval for binning
-    BINS = '1h'
+    BINS = '12h'
 
     # Decide to include fridays
     INCLUDE_FRIDAY = False

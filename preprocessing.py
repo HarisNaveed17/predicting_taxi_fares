@@ -61,7 +61,7 @@ def concat_process_data(path, area_names, resample_interval):
     data_sem22 = full["2022-01-24 00:00:00": "2022-05-09 23:30:00"]
     data_sem23 = full["2023-01-23 00:00:00": "2023-05-16 23:30:00"]
     data_sems = pd.concat([data_sem22, data_sem23])
-    data_sems.to_csv(f"WSQ_full_data_{resample_interval}.csv")
+    data_sems.to_csv(f"MSG_full_data_{resample_interval}.csv")
     return data_sems
 
 
@@ -87,8 +87,8 @@ def process_data(file, cols_to_use, locs, resample_interval):
 if __name__ == "__main__":
     #df = concat_process_data(DATA_DIR)
 # <<<<<<< Updated upstream
-    area_names = ["Greenwich Village South"]
-    full_data = concat_process_data(DATA_DIR, area_names, "240min")
+    area_names = ["Penn Station/Madison Sq West"]
+    full_data = concat_process_data(DATA_DIR, area_names, "30min")
     print(full_data)
     # locs = get_taxi_zone_id(area_names)
     # df = process_data("raw_data/yellow_tripdata_2022-01.parquet", ["tpep_pickup_datetime", "PULocationID", "tip_amount"], locs)

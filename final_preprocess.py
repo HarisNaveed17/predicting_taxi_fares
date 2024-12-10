@@ -160,7 +160,7 @@ if __name__ == "__main__":
    # ZONE = 'Upper East Side South'
    # ZONE = 'JFK Airport'
     # Pick interval for binning
-    BINS = '1h'
+    BINS = '3h'
 
     # Decide to include fridays
     INCLUDE_FRIDAY = False
@@ -169,7 +169,7 @@ if __name__ == "__main__":
     INCLUDE_OBSERVED = False
 
     # Decide whether to discretize on weekend
-    DISCRETIZE_WEEKEND = False
+    DISCRETIZE_WEEKEND = True
 
     # Get data object
     data = list()
@@ -208,9 +208,11 @@ if __name__ == "__main__":
     # Redefine weekdays
     if DISCRETIZE_WEEKEND:
         if INCLUDE_FRIDAY:
-            full_data['weekday'] = full_data.index.weekday >= 4 
+            full_data['weekend'] = full_data.index.weekday >= 4 
+            full_data['weekday'] = full_data.index.weekday
         else:
-            full_data['weekday'] = full_data.index.weekday >= 5 # Doesn't include Friday
+            full_data['weekend'] = full_data.index.weekday >= 5 # Doesn't include Friday
+            full_data['weekday'] = full_data.index.weekday
     else:
         full_data['weekday'] = full_data.index.weekday
 

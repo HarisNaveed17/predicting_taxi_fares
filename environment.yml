@@ -159,4 +159,4 @@ dependencies:
   - zstd=1.5.6=hb46c0d2_0
   - pip:
       - holidays==0.62
-prefix: # TO CONDA ENV
+prefix: /Users/willcalandra/anaconda3/envs/tsa
